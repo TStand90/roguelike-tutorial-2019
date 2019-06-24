@@ -1,6 +1,11 @@
+from typing import List
+
 from bearlibterminal import terminal
 
+from entity import Entity
+from game_map import GameMap
 from input_handlers import handle_keys
+from render_functions import render_all
 
 
 def main():
@@ -8,17 +13,37 @@ def main():
 
     screen_width: int = 80
     screen_height: int = 25
+    map_width: int = 80
+    map_height: int = 20
+
+    colors = {
+        'dark_wall': terminal.color_from_argb(0, 0, 0, 100),
+        'dark_ground': terminal.color_from_argb(0, 50, 50, 150)
+    }
 
     game_running: bool = True
 
-    player_x: int = int(screen_width / 2)
-    player_y: int = int(screen_height / 2)
+    game_map: GameMap = GameMap(width=map_width, height=map_height)
+
+    player: Entity = Entity(
+        x=int(screen_width / 2),
+        y=int(screen_height / 2),
+        char='@',
+        color=terminal.color_from_argb(0, 255, 255, 255)
+    )
+    npc: Entity = Entity(
+        x=int(screen_width / 2) + 2,
+        y=int(screen_height / 2),
+        char='@',
+        color=terminal.color_from_argb(0, 255, 255, 0)
+    )
+    entities: List[Entity] = [npc, player]
 
     terminal.open()
     terminal.set(f'window: size={screen_width}x{screen_height}, title="{window_title}";')
 
     while game_running:
-        terminal.printf(player_x, player_y, '@')
+        render_all(entities=entities, game_map=game_map, colors=colors)
 
         terminal.refresh()
 
@@ -36,8 +61,8 @@ def main():
             if movement:
                 dx, dy = movement
 
-                player_x += dx
-                player_y += dy
+                if not game_map.is_blocked(player.x + dx, player.y + dy):
+                    player.move(dx, dy)
 
         terminal.clear()
 
