@@ -11,10 +11,14 @@ from render_functions import render_all
 def main():
     window_title: str = 'Bearlibterm/TCOD Roguelike'
 
-    screen_width: int = 80
-    screen_height: int = 25
+    screen_width: int = 120
+    screen_height: int = 45
     map_width: int = 80
-    map_height: int = 20
+    map_height: int = 40
+
+    room_max_size: int = 10
+    room_min_size: int = 6
+    max_rooms: int = 30
 
     colors = {
         'dark_wall': terminal.color_from_argb(0, 0, 0, 100),
@@ -22,8 +26,6 @@ def main():
     }
 
     game_running: bool = True
-
-    game_map: GameMap = GameMap(width=map_width, height=map_height)
 
     player: Entity = Entity(
         x=int(screen_width / 2),
@@ -38,6 +40,9 @@ def main():
         color=terminal.color_from_argb(0, 255, 255, 0)
     )
     entities: List[Entity] = [npc, player]
+
+    game_map: GameMap = GameMap(width=map_width, height=map_height)
+    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player)
 
     terminal.open()
     terminal.set(f'window: size={screen_width}x{screen_height}, title="{window_title}";')
