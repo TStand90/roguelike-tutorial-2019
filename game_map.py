@@ -32,28 +32,22 @@ class GameMap(Map):
         self.walkable[:] = False
 
     def create_h_tunnel(self, x1, x2, y):
-        for x in range(min(x1, x2), max(x1, x2) + 1):
-            # self.tiles[x][y].blocked = False
-            # self.tiles[x][y].block_sight = False
-            self.walkable[x, y] = True
-            self.transparent[x, y] = True
+        min_x: int = min(x1, x2)
+        max_x: int = max(x1, x2) + 1
+
+        self.walkable[min_x:max_x, y] = True
+        self.transparent[min_x:max_x, y] = True
 
     def create_room(self, room):
-        # go through the tiles in the rectangle and make them passable
-        for x in range(room.x1 + 1, room.x2):
-            for y in range(room.y1 + 1, room.y2):
-                # self.tiles[x][y].blocked = False
-                # self.tiles[x][y].block_sight = False
-
-                self.walkable[x, y] = True
-                self.transparent[x, y] = True
+        self.walkable[room.x1+1:room.x2, room.y1+1:room.y2] = True
+        self.transparent[room.x1+1:room.x2, room.y1+1:room.y2] = True
 
     def create_v_tunnel(self, y1, y2, x):
-        for y in range(min(y1, y2), max(y1, y2) + 1):
-            # self.tiles[x][y].blocked = False
-            # self.tiles[x][y].block_sight = False
-            self.walkable[x, y] = True
-            self.transparent[x, y] = True
+        min_y: int = min(y1, y2)
+        max_y: int = max(y1, y2) + 1
+
+        self.walkable[x, min_y:max_y] = True
+        self.transparent[x, min_y:max_y] = True
 
     def is_blocked(self, x, y):
         return not self.walkable[x, y]
