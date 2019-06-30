@@ -10,4 +10,5 @@ def render_all(entities: List[Entity], game_map: GameMap, colors):
 
     # Draw all entities in the list
     for entity in entities:
-        entity.draw()
+        if game_map.fov[entity.x, entity.y]:
+            entity.draw()
