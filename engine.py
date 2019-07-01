@@ -1,9 +1,8 @@
-from typing import List
-
 from bearlibterminal import terminal
 
-from entity import Entity
+from entity import Entity, get_blocking_entities_at_location
 from game_map import GameMap
+from game_states import GameStates
 from input_handlers import handle_keys
 from render_functions import render_all
 
@@ -24,6 +23,8 @@ def main():
     fov_light_walls: bool = True
     fov_radius: int = 10
 
+    max_monsters_per_room: int = 3
+
     colors = {
         'dark_wall': terminal.color_from_argb(0, 0, 0, 100),
         'dark_ground': terminal.color_from_argb(0, 50, 50, 150),
@@ -36,21 +37,20 @@ def main():
     fov_recompute: bool = True
 
     player: Entity = Entity(
-        x=int(screen_width / 2),
-        y=int(screen_height / 2),
+        x=0,
+        y=0,
         char='@',
-        color=terminal.color_from_argb(0, 255, 255, 255)
+        color=terminal.color_from_argb(0, 255, 255, 255),
+        name='Player',
+        blocks=True
     )
-    npc: Entity = Entity(
-        x=int(screen_width / 2) + 2,
-        y=int(screen_height / 2),
-        char='@',
-        color=terminal.color_from_argb(0, 255, 255, 0)
-    )
-    entities: List[Entity] = [npc, player]
+    entities = [player]
 
     game_map: GameMap = GameMap(width=map_width, height=map_height)
-    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player)
+    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
+                      max_monsters_per_room)
+
+    game_state: GameStates = GameStates.PLAYERS_TURN
 
     terminal.open()
     terminal.set(f'window: size={screen_width}x{screen_height}, title="{window_title}";')
@@ -82,13 +82,29 @@ def main():
             if escape:
                 game_running = False
 
-            if movement:
+            if movement and game_state == GameStates.PLAYERS_TURN:
                 dx, dy = movement
+                destination_x: int = player.x + dx
+                destination_y: int = player.y + dy
 
-                if not game_map.is_blocked(player.x + dx, player.y + dy):
-                    player.move(dx, dy)
+                if not game_map.is_blocked(destination_x, destination_y):
+                    target: Entity = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
-                    fov_recompute = True
+                    if target:
+                        print(f'You kick the {target.name} in the shins, much to its annoyance!')
+                    else:
+                        player.move(dx, dy)
+
+                        fov_recompute = True
+
+                    game_state = GameStates.ENEMY_TURN
+
+            if game_state == GameStates.ENEMY_TURN:
+                for entity in entities:
+                    if entity != player:
+                        print(f'The {entity.name} ponders the meaning of its existence.')
+
+                game_state = GameStates.PLAYERS_TURN
 
         terminal.clear()
 
