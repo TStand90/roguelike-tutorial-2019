@@ -1,3 +1,6 @@
+from entity import Entity
+
+
 class Fighter:
     def __init__(self, hp: int, defense: int, power: int):
         self.max_hp: int = hp
@@ -5,7 +8,7 @@ class Fighter:
         self.defense: int = defense
         self.power: int = power
 
-    def attack(self, target: 'Entity'):
+    def attack(self, target: Entity):
         results = []
 
         damage: int = self.power - target.fighter.defense
