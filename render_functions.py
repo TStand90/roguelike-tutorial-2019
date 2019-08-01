@@ -8,12 +8,27 @@ from bearlibterminal import terminal
 if TYPE_CHECKING:
     from entity import Entity
     from game_map import GameMap
+    from game_messages import MessageLog
 
 
 class RenderOrder(Enum):
     CORPSE = auto()
     ITEM = auto()
     ACTOR = auto()
+
+
+def get_names_under_mouse(entities, fov_map):
+    mouse_x: int = terminal.state(terminal.TK_MOUSE_X)
+    mouse_y: int = terminal.state(terminal.TK_MOUSE_Y)
+
+    names = [
+        entity.name for entity in entities
+        if entity.x == mouse_x and entity.y == mouse_y
+           and fov_map[mouse_x, mouse_y]
+    ]
+    names = ', '.join(names)
+
+    return names.capitalize()
 
 
 def render_bar(x: int, y: int, total_width: int, label: str, current_value: int, maximum_value: int, text_color: str,
@@ -31,7 +46,8 @@ def render_bar(x: int, y: int, total_width: int, label: str, current_value: int,
     terminal.printf(x, y, bar_text)
 
 
-def render_all(entities: List[Entity], player: Entity, game_map: GameMap, screen_height: int, colors):
+def render_all(entities: List[Entity], player: Entity, game_map: GameMap, message_log: MessageLog, screen_height: int,
+               colors):
     # Draw the map
     game_map.render(colors=colors)
 
@@ -42,6 +58,13 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, screen
         if game_map.fov[entity.x, entity.y]:
             entity.draw()
 
-    render_bar(x=1, y=screen_height-3, total_width=30, label='HP', current_value=player.fighter.hp,
+    render_bar(x=81, y=1, total_width=30, label='HP', current_value=player.fighter.hp,
                maximum_value=player.fighter.max_hp, text_color='white', bar_primary_color='green',
                bar_secondary_color='red')
+
+    message_log.render()
+
+    names_under_mouse = get_names_under_mouse(entities, game_map.fov)
+
+    if names_under_mouse:
+        terminal.printf(81, 5, names_under_mouse)
