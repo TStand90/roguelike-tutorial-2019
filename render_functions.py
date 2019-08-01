@@ -16,6 +16,21 @@ class RenderOrder(Enum):
     ACTOR = auto()
 
 
+def render_bar(x: int, y: int, total_width: int, label: str, current_value: int, maximum_value: int, text_color: str,
+               bar_primary_color: str, bar_secondary_color: str):
+    bar_primary_width: int = int(float(current_value) / maximum_value * total_width)
+    bar_secondary_width: int = total_width - bar_primary_width
+
+    bar_text = format(f'{label}: {current_value:02} / {maximum_value:02}', f'^{total_width}')
+    bar_primary_background_text = ' ' * bar_primary_width
+    bar_secondary_background_text = ' ' * bar_secondary_width
+
+    terminal.printf(x, y, f'[bkcolor={bar_primary_color}]{bar_primary_background_text}[/bkcolor]')
+    terminal.printf(x + bar_primary_width, y,
+                    f'[bkcolor={bar_secondary_color}]{bar_secondary_background_text}[/bkcolor]')
+    terminal.printf(x, y, bar_text)
+
+
 def render_all(entities: List[Entity], player: Entity, game_map: GameMap, screen_height: int, colors):
     # Draw the map
     game_map.render(colors=colors)
@@ -27,4 +42,6 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, screen
         if game_map.fov[entity.x, entity.y]:
             entity.draw()
 
-    terminal.printf(1, screen_height - 2, f'HP: {player.fighter.hp}/{player.fighter.max_hp}')
+    render_bar(x=1, y=screen_height-3, total_width=30, label='HP', current_value=player.fighter.hp,
+               maximum_value=player.fighter.max_hp, text_color='white', bar_primary_color='green',
+               bar_secondary_color='red')
