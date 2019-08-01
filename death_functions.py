@@ -14,7 +14,7 @@ def kill_player(player):
 
 
 def kill_monster(monster):
-    death_message = '[color=orange]{0} is dead! Also this is a really really \nreally really really really really really long message to try and testing something.[/color]'.format(monster.name.capitalize())
+    death_message = '[color=orange]{0} is dead![/color]'.format(monster.name.capitalize())
 
     monster.char = '%'
     monster.color = terminal.color_from_name('red')
