@@ -1,10 +1,12 @@
 from bearlibterminal import terminal
 
+from components.fighter import Fighter
+from death_functions import kill_monster, kill_player
 from entity import Entity, get_blocking_entities_at_location
 from game_map import GameMap
 from game_states import GameStates
 from input_handlers import handle_keys
-from render_functions import render_all
+from render_functions import render_all, RenderOrder
 
 
 def main():
@@ -36,13 +38,16 @@ def main():
 
     fov_recompute: bool = True
 
+    fighter_component: Fighter = Fighter(hp=30, defense=2, power=5)
     player: Entity = Entity(
         x=0,
         y=0,
         char='@',
         color=terminal.color_from_argb(0, 255, 255, 255),
         name='Player',
-        blocks=True
+        blocks=True,
+        render_order=RenderOrder.ACTOR,
+        fighter=fighter_component
     )
     entities = [player]
 
@@ -65,7 +70,7 @@ def main():
                 algorithm=fov_algorithm
             )
 
-        render_all(entities=entities, game_map=game_map, colors=colors)
+        render_all(entities=entities, player=player, game_map=game_map, screen_height=screen_height, colors=colors)
 
         fov_recompute = False
 
@@ -78,6 +83,9 @@ def main():
 
             escape = action.get('escape')
             movement = action.get('movement')
+            wait = action.get('wait')
+
+            player_turn_results = []
 
             if escape:
                 game_running = False
@@ -91,7 +99,8 @@ def main():
                     target: Entity = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
                     if target:
-                        print(f'You kick the {target.name} in the shins, much to its annoyance!')
+                        attack_results = player.fighter.attack(target=target)
+                        player_turn_results.extend(attack_results)
                     else:
                         player.move(dx, dy)
 
@@ -99,12 +108,52 @@ def main():
 
                     game_state = GameStates.ENEMY_TURN
 
+            if wait:
+                game_state = GameStates.ENEMY_TURN
+
+            for player_turn_result in player_turn_results:
+                message = player_turn_result.get('message')
+                dead_entity = player_turn_result.get('dead')
+
+                if message:
+                    print(message)
+
+                if dead_entity:
+                    if dead_entity == player:
+                        message, game_state = kill_player(dead_entity)
+                    else:
+                        message = kill_monster(dead_entity)
+
+                    print(message)
+
             if game_state == GameStates.ENEMY_TURN:
                 for entity in entities:
-                    if entity != player:
-                        print(f'The {entity.name} ponders the meaning of its existence.')
+                    if entity.ai:
+                        # entity.ai.take_turn(target=player, game_map=game_map, entities=entities)
+                        enemy_turn_results = entity.ai.take_turn(target=player, game_map=game_map, entities=entities)
 
-                game_state = GameStates.PLAYERS_TURN
+                        for enemy_turn_result in enemy_turn_results:
+                            message = enemy_turn_result.get('message')
+                            dead_entity = enemy_turn_result.get('dead')
+
+                            if message:
+                                print(message)
+
+                            if dead_entity:
+                                if dead_entity == player:
+                                    message, game_state = kill_player(dead_entity)
+                                else:
+                                    message = kill_monster(dead_entity)
+
+                                print(message)
+
+                                if game_state == GameStates.PLAYER_DEAD:
+                                    break
+
+                        if game_state == GameStates.PLAYER_DEAD:
+                            break
+                else:
+                    game_state = GameStates.PLAYERS_TURN
 
         terminal.clear()
 

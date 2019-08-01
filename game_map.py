@@ -4,7 +4,11 @@ from bearlibterminal import terminal
 import numpy
 from tcod.map import Map
 
+from components.ai import BasicMonster
+from components.fighter import Fighter
 from entity import Entity
+
+from render_functions import RenderOrder
 
 
 class Rect:
@@ -122,22 +126,34 @@ class GameMap(Map):
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
                 if randint(0, 100) < 80:
+                    fighter_component: Fighter = Fighter(hp=10, defense=0, power=3)
+                    ai_component: BasicMonster = BasicMonster()
+
                     monster = Entity(
                         x=x,
                         y=y,
                         char='o',
                         color=terminal.color_from_argb(0, 63, 127, 63),
                         name='Orc',
-                        blocks=True
+                        blocks=True,
+                        render_order=RenderOrder.ACTOR,
+                        fighter=fighter_component,
+                        ai=ai_component
                     )
                 else:
+                    fighter_component: Fighter = Fighter(hp=16, defense=1, power=4)
+                    ai_component: BasicMonster = BasicMonster()
+
                     monster = Entity(
                         x=x,
                         y=y,
                         char='T',
                         color=terminal.color_from_argb(0, 0, 127, 0),
                         name='Troll',
-                        blocks=True
+                        blocks=True,
+                        render_order=RenderOrder.ACTOR,
+                        fighter=fighter_component,
+                        ai=ai_component
                     )
 
                 entities.append(monster)
