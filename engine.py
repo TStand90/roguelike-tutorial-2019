@@ -173,8 +173,6 @@ def main():
                     else:
                         message = kill_monster(dead_entity)
 
-                    message_log.add_message(message)
-
                 if item_added:
                     entities.remove(item_added)
 
