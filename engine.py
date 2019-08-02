@@ -27,6 +27,7 @@ def main():
     fov_radius: int = 10
 
     max_monsters_per_room: int = 3
+    max_items_per_room: int = 2
 
     message_log_location_x: int = 0
     message_log_location_y: int = map_height
@@ -59,7 +60,7 @@ def main():
 
     game_map: GameMap = GameMap(width=map_width, height=map_height)
     game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
-                      max_monsters_per_room)
+                      max_monsters_per_room, max_items_per_room=max_items_per_room)
 
     game_state: GameStates = GameStates.PLAYERS_TURN
 
