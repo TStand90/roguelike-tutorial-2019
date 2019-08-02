@@ -40,6 +40,9 @@ class Entity:
         if self.item:
             self.item.owner = self
 
+    def distance(self, target_x, target_y):
+        return math.sqrt((target_x - self.x) ** 2 + (target_y - self.y) ** 2)
+
     def distance_to(self, other):
         dx = other.x - self.x
         dy = other.y - self.y

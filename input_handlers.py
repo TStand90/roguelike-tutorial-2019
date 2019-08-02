@@ -27,6 +27,8 @@ def handle_keys(key: int, game_state: GameStates):
         return handle_player_dead_keys(key)
     elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
         return handle_inventory_keys(key)
+    elif game_state == GameStates.TARGETING:
+        return handle_targeting_keys(key)
 
     return {}
 
@@ -39,6 +41,18 @@ def handle_inventory_keys(key):
 
     if key in KEY_MAPPINGS['escape']:
         return {'escape': True}
+
+    return {}
+
+
+def handle_mouse(mouse_input):
+    mouse_x: int = terminal.state(terminal.TK_MOUSE_X)
+    mouse_y: int = terminal.state(terminal.TK_MOUSE_Y)
+
+    if mouse_input == terminal.TK_MOUSE_LEFT:
+        return {'left_click': (mouse_x, mouse_y)}
+    elif mouse_input == terminal.TK_MOUSE_RIGHT:
+        return {'right_click': (mouse_x, mouse_y)}
 
     return {}
 
@@ -82,5 +96,12 @@ def handle_player_turn_keys(key: int):
 
     if key in KEY_MAPPINGS['escape']:
         return {'escape': True}
+
+    return {}
+
+
+def handle_targeting_keys(key):
+    if key in KEY_MAPPINGS['escape']:
+        return {'exit': True}
 
     return {}
