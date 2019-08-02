@@ -9,7 +9,6 @@ def kill_player(player):
     player.char = '%'
     player.color = terminal.color_from_name('red')
 
-    # return 'You died!', GameStates.PLAYER_DEAD
     return f'[color=red]You died![/color]', GameStates.PLAYER_DEAD
 
 

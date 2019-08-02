@@ -72,8 +72,6 @@ class MessageLog:
         for i in range(self.scrollbar_height):
             terminal.put_ext(scrollbar_column, i, 0, int(scrollbar_offset), 0x2588)
 
-        terminal.refresh()
-
     def reset(self):
         self.messages = []
         self.frame_offset = 0

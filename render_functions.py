@@ -5,6 +5,10 @@ from typing import List, TYPE_CHECKING
 
 from bearlibterminal import terminal
 
+from game_states import GameStates
+
+from menus import inventory_menu
+
 if TYPE_CHECKING:
     from entity import Entity
     from game_map import GameMap
@@ -46,8 +50,8 @@ def render_bar(x: int, y: int, total_width: int, label: str, current_value: int,
     terminal.printf(x, y, bar_text)
 
 
-def render_all(entities: List[Entity], player: Entity, game_map: GameMap, message_log: MessageLog, screen_height: int,
-               colors):
+def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_state: GameStates,
+               message_log: MessageLog, screen_width: int, screen_height: int, colors):
     # Draw the map
     game_map.render(colors=colors)
 
@@ -68,3 +72,17 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, messag
 
     if names_under_mouse:
         terminal.printf(81, 5, names_under_mouse)
+
+    if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
+        if game_state == GameStates.SHOW_INVENTORY:
+            inventory_title = 'Press the key next to an item to use it, or Esc to cancel.\n'
+        else:
+            inventory_title = 'Press the key next to an item to drop it, or Esc to cancel.\n'
+
+        inventory_menu(
+            header=inventory_title,
+            inventory=player.inventory,
+            inventory_width=50,
+            screen_width=screen_width,
+            screen_height=screen_height
+        )

@@ -6,7 +6,11 @@ from tcod.map import Map
 
 from components.ai import BasicMonster
 from components.fighter import Fighter
+from components.item import Item
+
 from entity import Entity
+
+from item_functions import heal
 
 from render_functions import RenderOrder
 
@@ -164,8 +168,9 @@ class GameMap(Map):
             y: int = randint(room.y1 + 1, room.y2 - 1)
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
+                item_component = Item(use_function=heal, amount=4)
                 item: Entity = Entity(x=x, y=y, char='!', color=terminal.color_from_argb(0, 238, 130, 238),
-                                      name='Healing Potion', render_order=RenderOrder.ITEM)
+                                      name='Healing Potion', render_order=RenderOrder.ITEM, item=item_component)
 
                 entities.append(item)
 

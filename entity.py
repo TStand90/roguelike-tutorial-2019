@@ -14,7 +14,7 @@ class Entity:
     """
     # def __init__(self, x, y, char, color):
     def __init__(self, x: int, y: int, char: str, color, name: str, blocks: bool = False,
-                 render_order: RenderOrder = RenderOrder.CORPSE, fighter=None, ai=None):
+                 render_order: RenderOrder = RenderOrder.CORPSE, ai=None, fighter=None, inventory=None, item=None):
         self.x: int = x
         self.y: int = y
         self.char: str = char
@@ -22,14 +22,23 @@ class Entity:
         self.name: str = name
         self.blocks: bool = blocks
         self.render_order = render_order
-        self.fighter = fighter
+
         self.ai = ai
+        self.fighter = fighter
+        self.inventory = inventory
+        self.item = item
+
+        if self.ai:
+            self.ai.owner = self
 
         if self.fighter:
             self.fighter.owner = self
 
-        if self.ai:
-            self.ai.owner = self
+        if self.inventory:
+            self.inventory.owner = self
+
+        if self.item:
+            self.item.owner = self
 
     def distance_to(self, other):
         dx = other.x - self.x

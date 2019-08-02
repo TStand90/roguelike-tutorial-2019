@@ -1,6 +1,7 @@
 from bearlibterminal import terminal
 
 from components.fighter import Fighter
+from components.inventory import Inventory
 from death_functions import kill_monster, kill_player
 from entity import Entity, get_blocking_entities_at_location
 from game_map import GameMap
@@ -27,7 +28,7 @@ def main():
     fov_radius: int = 10
 
     max_monsters_per_room: int = 3
-    max_items_per_room: int = 2
+    max_items_per_room: int = 20
 
     message_log_location_x: int = 0
     message_log_location_y: int = map_height
@@ -46,6 +47,8 @@ def main():
     fov_recompute: bool = True
 
     fighter_component: Fighter = Fighter(hp=30, defense=2, power=5)
+    inventory_component: Inventory = Inventory(capacity=26)
+
     player: Entity = Entity(
         x=0,
         y=0,
@@ -54,7 +57,8 @@ def main():
         name='Player',
         blocks=True,
         render_order=RenderOrder.ACTOR,
-        fighter=fighter_component
+        fighter=fighter_component,
+        inventory=inventory_component
     )
     entities = [player]
 
@@ -63,6 +67,7 @@ def main():
                       max_monsters_per_room, max_items_per_room=max_items_per_room)
 
     game_state: GameStates = GameStates.PLAYERS_TURN
+    previous_game_state: GameStates = game_state
 
     message_log: MessageLog = MessageLog()
 
@@ -79,8 +84,8 @@ def main():
                 algorithm=fov_algorithm
             )
 
-        render_all(entities=entities, player=player, game_map=game_map, message_log=message_log,
-                   screen_height=screen_height, colors=colors)
+        render_all(entities=entities, player=player, game_map=game_map, game_state=game_state, message_log=message_log,
+                   screen_width=screen_width, screen_height=screen_height, colors=colors)
 
         fov_recompute = False
 
@@ -89,16 +94,23 @@ def main():
         if terminal.has_input():
             terminal_input: int = terminal.read()
 
-            action = handle_keys(terminal_input)
+            action = handle_keys(key=terminal_input, game_state=game_state)
 
+            drop_inventory = action.get('drop_inventory')
             escape = action.get('escape')
             movement = action.get('movement')
+            inventory_index = action.get('inventory_index')
+            pickup = action.get('pickup')
+            show_inventory = action.get('show_inventory')
             wait = action.get('wait')
 
             player_turn_results = []
 
             if escape:
-                game_running = False
+                if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
+                    game_state = previous_game_state
+                else:
+                    game_running = False
 
             if movement and game_state == GameStates.PLAYERS_TURN:
                 dx, dy = movement
@@ -121,13 +133,39 @@ def main():
             if wait:
                 game_state = GameStates.ENEMY_TURN
 
-            for player_turn_result in player_turn_results:
-                message = player_turn_result.get('message')
-                dead_entity = player_turn_result.get('dead')
+            if inventory_index is not None and previous_game_state != GameStates.PLAYER_DEAD and inventory_index < len(
+                    player.inventory.items):
+                item = player.inventory.items[inventory_index]
 
-                if message:
-                    # print(message)
-                    message_log.add_message(message)
+                if game_state == GameStates.SHOW_INVENTORY:
+                    player_turn_results.extend(player.inventory.use(item))
+                elif game_state == GameStates.DROP_INVENTORY:
+                    player_turn_results.extend(player.inventory.drop_item(item))
+
+            if pickup and game_state == GameStates.PLAYERS_TURN:
+                for entity in entities:
+                    if entity.item and entity.x == player.x and entity.y == player.y:
+                        pickup_results = player.inventory.add_item(entity)
+                        player_turn_results.extend(pickup_results)
+
+                        break
+                else:
+                    message_log.add_message('[color=yellow]There is nothing here to pick up.[/color]')
+
+            if show_inventory:
+                previous_game_state = game_state
+                game_state = GameStates.SHOW_INVENTORY
+
+            if drop_inventory:
+                previous_game_state = game_state
+                game_state = GameStates.DROP_INVENTORY
+
+            for player_turn_result in player_turn_results:
+                dead_entity = player_turn_result.get('dead')
+                item_added = player_turn_result.get('item_added')
+                item_consumed = player_turn_result.get('consumed')
+                item_dropped = player_turn_result.get('item_dropped')
+                message = player_turn_result.get('message')
 
                 if dead_entity:
                     if dead_entity == player:
@@ -135,6 +173,22 @@ def main():
                     else:
                         message = kill_monster(dead_entity)
 
+                    message_log.add_message(message)
+
+                if item_added:
+                    entities.remove(item_added)
+
+                    game_state = GameStates.ENEMY_TURN
+
+                if item_consumed:
+                    game_state = GameStates.ENEMY_TURN
+
+                if item_dropped:
+                    entities.append(item_dropped)
+
+                    game_state = GameStates.ENEMY_TURN
+
+                if message:
                     message_log.add_message(message)
 
             if game_state == GameStates.ENEMY_TURN:
