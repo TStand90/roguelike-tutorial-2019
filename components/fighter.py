@@ -1,14 +1,42 @@
-from entity import Entity
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from entity import Entity
 
 
 class Fighter:
-    def __init__(self, hp: int, defense: int, power: int):
-        self.max_hp: int = hp
+    def __init__(self, hp: int, defense: int, power: int, max_hp: int = None):
         self.hp: int = hp
         self.defense: int = defense
         self.power: int = power
 
-    def attack(self, target: Entity):
+        if max_hp:
+            self.max_hp = max_hp
+        else:
+            self.max_hp = hp
+
+    def to_json(self):
+        json_data = {
+            'max_hp': self.max_hp,
+            'hp': self.hp,
+            'defense': self.defense,
+            'power': self.power
+        }
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        fighter = cls(
+            hp=json_data['hp'],
+            defense=json_data['defense'],
+            power=json_data['power'],
+            max_hp=json_data['max_hp']
+        )
+
+        return fighter
+
+    def attack(self, target: 'Entity'):
         results = []
 
         damage: int = self.power - target.fighter.defense

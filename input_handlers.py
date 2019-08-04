@@ -6,6 +6,8 @@ from game_states import GameStates
 KEY_MAPPINGS = {
     'drop_inventory': (terminal.TK_D,),
     'escape': (terminal.TK_ESCAPE,),
+    'exit_game': (terminal.TK_C, terminal.TK_ESCAPE,),
+    'load_saved_game': (terminal.TK_B,),
     'move_north': (terminal.TK_UP, terminal.TK_K),
     'move_south': (terminal.TK_DOWN, terminal.TK_J,),
     'move_east': (terminal.TK_RIGHT, terminal.TK_L),
@@ -14,6 +16,7 @@ KEY_MAPPINGS = {
     'move_northwest': (terminal.TK_Y,),
     'move_southeast': (terminal.TK_N,),
     'move_southwest': (terminal.TK_B,),
+    'new_game': (terminal.TK_A,),
     'pickup': (terminal.TK_G,),
     'show_inventory': (terminal.TK_I,),
     'wait': (terminal.TK_PERIOD,),
@@ -41,6 +44,17 @@ def handle_inventory_keys(key):
 
     if key in KEY_MAPPINGS['escape']:
         return {'escape': True}
+
+    return {}
+
+
+def handle_main_menu(key):
+    if key in KEY_MAPPINGS['new_game']:
+        return {'new_game': True}
+    elif key in KEY_MAPPINGS['load_saved_game']:
+        return {'load_saved_game': True}
+    elif key in KEY_MAPPINGS['exit_game']:
+        return {'exit_game': True}
 
     return {}
 

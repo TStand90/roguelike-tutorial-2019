@@ -20,6 +20,24 @@ class MessageLog:
         self.scrollbar_height: int = 0
         self.dragging_scrollbar_offset: int = 0
 
+    def to_json(self):
+        json_data = {
+            'messages': self.messages
+        }
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        message_log = cls()
+
+        messages = json_data['messages']
+
+        for message in messages:
+            message_log.add_message(message)
+
+        return message_log
+
     def add_message(self, message: str):
         self.messages.append(message)
 

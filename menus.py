@@ -12,6 +12,16 @@ def inventory_menu(header: str, inventory: Inventory, inventory_width: int, scre
     menu(header=header, options=options, width=inventory_width, screen_width=screen_width, screen_height=screen_height)
 
 
+def main_menu(screen_width: int, screen_height: int):
+    menu(
+        header='',
+        options=['Play a new game', 'Continue last game', 'Quit'],
+        width=24,
+        screen_width=screen_width,
+        screen_height=screen_height
+    )
+
+
 def menu(header: str, options, width: int, screen_width: int, screen_height: int):
     if len(options) > 26:
         raise ValueError('Cannot have a menu with more than 26 options.')
@@ -38,3 +48,13 @@ def menu(header: str, options, width: int, screen_width: int, screen_height: int
         letter_index += 1
 
     terminal.layer = 0
+
+
+def message_box(header: str, width: int, screen_width: int, screen_height: int):
+    menu(
+        header=header,
+        options=[],
+        width=width,
+        screen_width=screen_width,
+        screen_height=screen_height
+    )

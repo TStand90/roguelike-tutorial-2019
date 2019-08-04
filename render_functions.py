@@ -51,9 +51,9 @@ def render_bar(x: int, y: int, total_width: int, label: str, current_value: int,
 
 
 def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_state: GameStates,
-               message_log: MessageLog, screen_width: int, screen_height: int, colors):
+               message_log: MessageLog, constants):
     # Draw the map
-    game_map.render(colors=colors)
+    game_map.render(colors=constants['colors'])
 
     entities_in_render_order = sorted(entities, key=lambda x: x.render_order.value)
 
@@ -83,6 +83,6 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_s
             header=inventory_title,
             inventory=player.inventory,
             inventory_width=50,
-            screen_width=screen_width,
-            screen_height=screen_height
+            screen_width=constants['screen_width'],
+            screen_height=constants['screen_height']
         )

@@ -1,6 +1,9 @@
+from typing import TYPE_CHECKING
+
 from components.ai import ConfusedMonster
 
-from entity import Entity
+if TYPE_CHECKING:
+    from entity import Entity
 
 
 def cast_confuse(*args, **kwargs):

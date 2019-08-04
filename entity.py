@@ -1,9 +1,14 @@
 import math
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from bearlibterminal import terminal
 import tcod
 import tcod.path
+
+from components.ai import BasicMonster, ConfusedMonster
+from components.fighter import Fighter
+from components.inventory import Inventory
+from components.item import Item
 
 from render_functions import RenderOrder
 
@@ -39,6 +44,89 @@ class Entity:
 
         if self.item:
             self.item.owner = self
+
+    def to_json(self):
+        json_data = {
+            'x': self.x,
+            'y': self.y,
+            'char': self.char,
+            'color': self.color,
+            'name': self.name,
+            'blocks': self.blocks,
+            'render_order': self.render_order.value
+        }
+
+        if self.ai:
+            json_data['ai'] = self.ai.to_json()
+
+        if self.fighter:
+            json_data['fighter'] = self.fighter.to_json()
+
+        if self.inventory:
+            json_data['inventory'] = self.inventory.to_json()
+
+        if self.item:
+            json_data['item'] = self.item.to_json()
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        x = json_data.get('x')
+        y = json_data.get('y')
+        char = json_data.get('char')
+        color = json_data.get('color')
+        name = json_data.get('name')
+        blocks = json_data.get('blocks')
+        render_order_value = json_data.get('render_order')
+
+        ai_json = json_data.get('ai')
+        fighter_json = json_data.get('fighter')
+        inventory_json = json_data.get('inventory')
+        item_json = json_data.get('item')
+
+        if fighter_json:
+            fighter = Fighter.from_json(json_data=fighter_json)
+        else:
+            fighter = None
+
+        if inventory_json:
+            inventory = Inventory.from_json(json_data=inventory_json)
+        else:
+            inventory = None
+
+        if item_json:
+            item = Item.from_json(json_data=item_json)
+        else:
+            item = None
+
+        entity = cls(
+            x=x,
+            y=y,
+            char=char,
+            color=color,
+            name=name,
+            blocks=blocks,
+            render_order=RenderOrder(render_order_value),
+            ai=None,
+            fighter=fighter,
+            inventory=inventory,
+            item=item
+        )
+
+        if ai_json:
+            name = ai_json.get('name')
+
+            if name == BasicMonster.__name__:
+                ai = BasicMonster.from_json(json_data=ai_json, owner=entity)
+            elif name == ConfusedMonster.__name__:
+                ai = ConfusedMonster.from_json(json_data=ai_json['ai_data'], owner=entity)
+            else:
+                ai = None
+
+            entity.ai = ai
+
+        return entity
 
     def distance(self, target_x, target_y):
         return math.sqrt((target_x - self.x) ** 2 + (target_y - self.y) ** 2)

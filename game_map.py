@@ -42,6 +42,29 @@ class GameMap(Map):
         self.transparent[:] = False
         self.walkable[:] = False
 
+    def to_json(self):
+        json_data = {
+            'width': self.width,
+            'height': self.height,
+            'explored': self.explored.tolist(),
+            'transparent': self.transparent.tolist(),
+            'walkable': self.walkable.tolist()
+        }
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        game_map = cls(width=json_data['width'], height=json_data['height'])
+
+        for y in range(game_map.height):
+            for x in range(game_map.width):
+                game_map.explored[x, y] = json_data['explored'][x][y]
+                game_map.transparent[x, y] = json_data['transparent'][x][y]
+                game_map.walkable[x, y] = json_data['walkable'][x][y]
+
+        return game_map
+
     def create_h_tunnel(self, x1, x2, y):
         min_x: int = min(x1, x2)
         max_x: int = max(x1, x2) + 1
@@ -63,18 +86,17 @@ class GameMap(Map):
     def is_blocked(self, x, y):
         return not self.walkable[x, y]
 
-    def make_map(self, max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
-                 max_monsters_per_room, max_items_per_room: int):
+    def make_map(self, player, entities, constants):
         rooms = []
         num_rooms = 0
 
-        for r in range(max_rooms):
+        for r in range(constants['max_rooms']):
             # random width and height
-            w = randint(room_min_size, room_max_size)
-            h = randint(room_min_size, room_max_size)
+            w = randint(constants['room_min_size'], constants['room_max_size'])
+            h = randint(constants['room_min_size'], constants['room_max_size'])
             # random position without going out of the boundaries of the map
-            x = randint(0, map_width - w - 1)
-            y = randint(0, map_height - h - 1)
+            x = randint(0, constants['map_width'] - w - 1)
+            y = randint(0, constants['map_height'] - h - 1)
 
             # "Rect" class makes rectangles easier to work with
             new_room = Rect(x, y, w, h)
@@ -113,16 +135,17 @@ class GameMap(Map):
                         self.create_v_tunnel(prev_y, new_y, prev_x)
                         self.create_h_tunnel(prev_x, new_x, new_y)
 
-                self.place_entities(new_room, entities, max_monsters_per_room, max_items_per_room)
+                self.place_entities(new_room, entities, constants)
 
                 # finally, append the new room to the list
                 rooms.append(new_room)
                 num_rooms += 1
 
-    def place_entities(self, room, entities, max_monsters_per_room: int, max_items_per_room: int):
+    @staticmethod
+    def place_entities(room, entities, constants):
         # Get a random number of monsters
-        number_of_monsters = randint(0, max_monsters_per_room)
-        number_of_items: int = randint(0, max_items_per_room)
+        number_of_monsters = randint(0, constants['max_monsters_per_room'])
+        number_of_items: int = randint(0, constants['max_items_per_room'])
 
         for i in range(number_of_monsters):
             # Choose a random location in the room

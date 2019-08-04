@@ -1,14 +1,34 @@
 from typing import List, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from components.item import Item
-    from entity import Entity
+from components.item import Item
 
 
 class Inventory:
-    def __init__(self, capacity: int):
+    def __init__(self, capacity: int, items: List['Entity'] = None):
         self.capacity: int = capacity
-        self.items: List[Entity] = []
+
+        if items:
+            self.items = items
+        else:
+            self.items = []
+
+    def to_json(self):
+        json_data = {
+            'capacity': self.capacity,
+            'items': [item.to_json() for item in self.items]
+        }
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        from entity import Entity
+
+        items = [Entity.from_json(item_json_data) for item_json_data in json_data['items']]
+
+        inventory = cls(capacity=json_data['capacity'], items=items)
+
+        return inventory
 
     def add_item(self, item: 'Entity'):
         results = []
