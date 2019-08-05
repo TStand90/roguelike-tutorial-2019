@@ -141,6 +141,7 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
 
             for player_turn_result in player_turn_results:
                 dead_entity = player_turn_result.get('dead')
+                equip = player_turn_result.get('equip')
                 item_added = player_turn_result.get('item_added')
                 item_consumed = player_turn_result.get('consumed')
                 item_dropped = player_turn_result.get('item_dropped')
@@ -153,6 +154,21 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
                         message, game_state = kill_player(dead_entity)
                     else:
                         message = kill_monster(dead_entity)
+
+                if equip:
+                    equip_results = player.equipment.toggle_equip(equip)
+
+                    for equip_result in equip_results:
+                        equipped = equip_result.get('equipped')
+                        dequipped = equip_result.get('dequipped')
+
+                        if equipped:
+                            message_log.add_message(f'You equipped the [color=blue]{equipped.name}[/color]')
+
+                        if dequipped:
+                            message_log.add_message(f'You dequipped the [color=blue]{dequipped.name}[/color]')
+
+                    game_state = GameStates.ENEMY_TURN
 
                 if item_added:
                     entities.remove(item_added)

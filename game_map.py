@@ -5,6 +5,8 @@ import numpy
 from tcod.map import Map
 
 from components.ai import BasicMonster
+from components.equipment import EquipmentSlots
+from components.equippable import Equippable
 from components.fighter import Fighter
 from components.item import Item
 
@@ -188,6 +190,8 @@ class GameMap(Map):
         }
         item_chances = {
             'healing_potion': 35,
+            'sword': from_dungeon_level(table=[[5, 4]], dungeon_level=self.dungeon_level),
+            'shield': from_dungeon_level(table=[[15, 8]], dungeon_level=self.dungeon_level),
             'lightning_scroll': from_dungeon_level([[25, 4]], self.dungeon_level),
             'fireball_scroll': from_dungeon_level([[25, 6]], self.dungeon_level),
             'confusion_scroll': from_dungeon_level([[10, 2]], self.dungeon_level)
@@ -202,7 +206,7 @@ class GameMap(Map):
                 monster_choice = random_choice_from_dict(monster_chances)
 
                 if monster_choice == 'orc':
-                    fighter_component: Fighter = Fighter(hp=10, defense=0, power=3)
+                    fighter_component: Fighter = Fighter(hp=10, base_defense=0, base_power=3)
                     ai_component: BasicMonster = BasicMonster()
 
                     monster = Entity(
@@ -217,7 +221,7 @@ class GameMap(Map):
                         ai=ai_component
                     )
                 else:
-                    fighter_component: Fighter = Fighter(hp=16, defense=1, power=4)
+                    fighter_component: Fighter = Fighter(hp=16, base_defense=1, base_power=4)
                     ai_component: BasicMonster = BasicMonster()
 
                     monster = Entity(
@@ -245,6 +249,14 @@ class GameMap(Map):
                     item_component = Item(use_function=heal, amount=4)
                     item: Entity = Entity(x=x, y=y, char='!', color=terminal.color_from_argb(0, 238, 130, 238),
                                           name='Healing Potion', render_order=RenderOrder.ITEM, item=item_component)
+                elif item_choice == 'sword':
+                    equippable_component = Equippable(slot=EquipmentSlots.MAIN_HAND, power_bonus=3)
+                    item = Entity(x=x, y=y, char='/', color=terminal.color_from_argb(0, 153, 204, 255), name='sword',
+                                  equippable=equippable_component)
+                elif item_choice == 'shield':
+                    equippable_component = Equippable(slot=EquipmentSlots.OFF_HAND, defense_bonus=1)
+                    item = Entity(x=x, y=y, char='[', color=terminal.color_from_argb(0, 153, 204, 255), name='Shield',
+                                  equippable=equippable_component)
                 elif item_choice == 'fireball_scroll':
                     item_component = Item(
                         use_function=cast_fireball,

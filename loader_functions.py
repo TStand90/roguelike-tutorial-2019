@@ -4,10 +4,13 @@ from typing import List
 
 from bearlibterminal import terminal
 
+from components.equipment import Equipment
+from components.equippable import Equippable
 from components.fighter import Fighter
 from components.inventory import Inventory
 
 from entity import Entity
+from equipment_slots import EquipmentSlots
 from game_map import GameMap
 from game_messages import MessageLog
 from game_states import GameStates
@@ -70,7 +73,8 @@ def get_constants():
 
 
 def get_game_variables(constants):
-    fighter_component: Fighter = Fighter(hp=30, defense=2, power=5)
+    equipment_component = Equipment()
+    fighter_component: Fighter = Fighter(hp=30, base_defense=2, base_power=3)
     inventory_component: Inventory = Inventory(capacity=26)
 
     player: Entity = Entity(
@@ -81,10 +85,23 @@ def get_game_variables(constants):
         name='Player',
         blocks=True,
         render_order=RenderOrder.ACTOR,
+        equipment=equipment_component,
         fighter=fighter_component,
         inventory=inventory_component
     )
     entities = [player]
+
+    equippable_component = Equippable(slot=EquipmentSlots.MAIN_HAND, power_bonus=2)
+    dagger = Entity(
+        x=0,
+        y=0,
+        char='-',
+        color=terminal.color_from_argb(0, 153, 204, 255),
+        name='Dagger',
+        equippable=equippable_component
+    )
+    player.inventory.add_item(dagger)
+    player.equipment.toggle_equip(dagger)
 
     game_map: GameMap = GameMap(width=constants['map_width'], height=constants['map_height'])
     game_map.make_map(

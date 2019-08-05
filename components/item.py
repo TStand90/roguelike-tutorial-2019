@@ -10,11 +10,15 @@ class Item:
 
     def to_json(self):
         json_data = {
-            'use_function_name': self.use_function.__name__,
             'targeting': self.targeting,
             'targeting_message': self.targeting_message,
             'function_kwargs': self.function_kwargs
         }
+
+        if self.use_function:
+            json_data['use_function_name'] = self.use_function.__name__
+        else:
+            json_data['use_function_name'] = None
 
         return json_data
 

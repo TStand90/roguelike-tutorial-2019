@@ -1,11 +1,13 @@
 import math
-from typing import List, TYPE_CHECKING
+from typing import List
 
 from bearlibterminal import terminal
 import tcod
 import tcod.path
 
 from components.ai import BasicMonster, ConfusedMonster
+from components.equipment import Equipment
+from components.equippable import Equippable
 from components.fighter import Fighter
 from components.inventory import Inventory
 from components.item import Item
@@ -17,9 +19,9 @@ class Entity:
     """
     A generic object to represent players, enemies, items, etc.
     """
-    # def __init__(self, x, y, char, color):
     def __init__(self, x: int, y: int, char: str, color, name: str, blocks: bool = False,
-                 render_order: RenderOrder = RenderOrder.CORPSE, ai=None, fighter=None, inventory=None, item=None):
+                 render_order: RenderOrder = RenderOrder.CORPSE, ai=None, equipment=None, equippable=None, fighter=None,
+                 inventory=None, item=None):
         self.x: int = x
         self.y: int = y
         self.char: str = char
@@ -29,12 +31,17 @@ class Entity:
         self.render_order = render_order
 
         self.ai = ai
+        self.equipment = equipment
+        self.equippable = equippable
         self.fighter = fighter
         self.inventory = inventory
         self.item = item
 
         if self.ai:
             self.ai.owner = self
+
+        if self.equipment:
+            self.equipment.owner = self
 
         if self.fighter:
             self.fighter.owner = self
@@ -44,6 +51,14 @@ class Entity:
 
         if self.item:
             self.item.owner = self
+
+        if self.equippable:
+            self.equippable.owner = self
+
+            if not self.item:
+                item = Item()
+                self.item = item
+                self.item.owner = self
 
     def to_json(self):
         json_data = {
@@ -58,6 +73,12 @@ class Entity:
 
         if self.ai:
             json_data['ai'] = self.ai.to_json()
+
+        if self.equipment:
+            json_data['equipment'] = self.equipment.to_json()
+
+        if self.equippable:
+            json_data['equippable'] = self.equippable.to_json()
 
         if self.fighter:
             json_data['fighter'] = self.fighter.to_json()
@@ -81,9 +102,21 @@ class Entity:
         render_order_value = json_data.get('render_order')
 
         ai_json = json_data.get('ai')
+        equipment_json = json_data.get('equipment')
+        equippable_json = json_data.get('equippable')
         fighter_json = json_data.get('fighter')
         inventory_json = json_data.get('inventory')
         item_json = json_data.get('item')
+
+        if equipment_json:
+            equipment = Equipment.from_json(json_data=equipment_json)
+        else:
+            equipment = None
+
+        if equippable_json:
+            equippable = Equippable.from_json(json_data=equippable_json)
+        else:
+            equippable = None
 
         if fighter_json:
             fighter = Fighter.from_json(json_data=fighter_json)
@@ -109,6 +142,8 @@ class Entity:
             blocks=blocks,
             render_order=RenderOrder(render_order_value),
             ai=None,
+            equipment=equipment,
+            equippable=equippable,
             fighter=fighter,
             inventory=inventory,
             item=item

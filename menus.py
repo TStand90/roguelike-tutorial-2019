@@ -1,13 +1,25 @@
+from typing import TYPE_CHECKING
+
 from bearlibterminal import terminal
 
-from components.inventory import Inventory
+if TYPE_CHECKING:
+    from entity import Entity
 
 
-def inventory_menu(header: str, inventory: Inventory, inventory_width: int, screen_width: int, screen_height: int):
-    if len(inventory.items) == 0:
+def inventory_menu(header: str, player: 'Entity', inventory_width: int, screen_width: int,
+                   screen_height: int):
+    if len(player.inventory.items) == 0:
         options = ['Inventory is empty.']
     else:
-        options = [item.name for item in inventory.items]
+        options = []
+
+        for item in player.inventory.items:
+            if player.equipment.main_hand == item:
+                options.append(f'{item.name} (on main hand)')
+            elif player.equipment.off_hand == item:
+                options.append(f'{item.name} (on off hand)')
+            else:
+                options.append(item.name)
 
     menu(header=header, options=options, width=inventory_width, screen_width=screen_width, screen_height=screen_height)
 

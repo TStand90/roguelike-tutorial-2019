@@ -83,7 +83,7 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_s
 
         inventory_menu(
             header=inventory_title,
-            inventory=player.inventory,
+            player=player,
             inventory_width=50,
             screen_width=constants['screen_width'],
             screen_height=constants['screen_height']

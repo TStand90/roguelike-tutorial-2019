@@ -5,22 +5,22 @@ if TYPE_CHECKING:
 
 
 class Fighter:
-    def __init__(self, hp: int, defense: int, power: int, max_hp: int = None):
+    def __init__(self, hp: int, base_defense: int, base_power: int, base_max_hp: int = None):
         self.hp: int = hp
-        self.defense: int = defense
-        self.power: int = power
+        self.base_defense: int = base_defense
+        self.base_power: int = base_power
 
-        if max_hp:
-            self.max_hp = max_hp
+        if base_max_hp:
+            self.base_max_hp = base_max_hp
         else:
-            self.max_hp = hp
+            self.base_max_hp = hp
 
     def to_json(self):
         json_data = {
-            'max_hp': self.max_hp,
+            'base_max_hp': self.base_max_hp,
             'hp': self.hp,
-            'defense': self.defense,
-            'power': self.power
+            'base_defense': self.base_defense,
+            'base_power': self.base_power
         }
 
         return json_data
@@ -29,12 +29,39 @@ class Fighter:
     def from_json(cls, json_data):
         fighter = cls(
             hp=json_data['hp'],
-            defense=json_data['defense'],
-            power=json_data['power'],
-            max_hp=json_data['max_hp']
+            base_defense=json_data['base_defense'],
+            base_power=json_data['base_power'],
+            base_max_hp=json_data['base_max_hp']
         )
 
         return fighter
+
+    @property
+    def max_hp(self):
+        if self.owner and self.owner.equipment:
+            bonus = self.owner.equipment.max_hp_bonus
+        else:
+            bonus = 0
+
+        return self.base_max_hp + bonus
+
+    @property
+    def power(self):
+        if self.owner and self.owner.equipment:
+            bonus = self.owner.equipment.power_bonus
+        else:
+            bonus = 0
+
+        return self.base_power + bonus
+
+    @property
+    def defense(self):
+        if self.owner and self.owner.equipment:
+            bonus = self.owner.equipment.defense_bonus
+        else:
+            bonus = 0
+
+        return self.base_defense + bonus
 
     def attack(self, target: 'Entity'):
         results = []
