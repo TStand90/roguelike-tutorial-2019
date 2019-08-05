@@ -49,6 +49,7 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
             inventory_index = action.get('inventory_index')
             pickup = action.get('pickup')
             show_inventory = action.get('show_inventory')
+            take_stairs = action.get('take_stairs')
             wait = action.get('wait')
 
             left_click = mouse_action.get('left_click')
@@ -113,6 +114,15 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
             if drop_inventory:
                 previous_game_state = game_state
                 game_state = GameStates.DROP_INVENTORY
+
+            if take_stairs:
+                if game_map.down_stairs[player.x, player.y]:
+                    entities = game_map.next_floor(player=player, message_log=message_log, constants=constants)
+                    fov_recompute = True
+
+                    terminal.clear()
+                else:
+                    message_log.add_message('[color=yellow]There are no stairs here.[/color]')
 
             if game_state == GameStates.TARGETING:
                 if left_click:

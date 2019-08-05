@@ -66,6 +66,8 @@ def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_s
                maximum_value=player.fighter.max_hp, text_color='white', bar_primary_color='green',
                bar_secondary_color='red')
 
+    terminal.printf(x=81, y=3, s=f'Dungeon Floor: {game_map.dungeon_level}')
+
     message_log.render()
 
     names_under_mouse = get_names_under_mouse(entities, game_map.fov)

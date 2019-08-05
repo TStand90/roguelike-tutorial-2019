@@ -19,6 +19,7 @@ KEY_MAPPINGS = {
     'new_game': (terminal.TK_A,),
     'pickup': (terminal.TK_G,),
     'show_inventory': (terminal.TK_I,),
+    'take_stairs': (terminal.TK_ENTER,),
     'wait': (terminal.TK_PERIOD,),
 }
 
@@ -104,9 +105,11 @@ def handle_player_turn_keys(key: int):
         return {'pickup': True}
     elif key in KEY_MAPPINGS['drop_inventory']:
         return {'drop_inventory': True}
-
     elif key in KEY_MAPPINGS['show_inventory']:
         return {'show_inventory': True}
+
+    if key in KEY_MAPPINGS['take_stairs']:
+        return {'take_stairs': True}
 
     if key in KEY_MAPPINGS['escape']:
         return {'escape': True}

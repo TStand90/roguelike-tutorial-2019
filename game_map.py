@@ -35,30 +35,36 @@ class Rect:
 
 
 class GameMap(Map):
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int, dungeon_level: int = 1):
         super().__init__(width=width, height=height, order='F')
 
         self.explored = numpy.zeros((width, height), dtype=bool, order='F')
         self.transparent[:] = False
         self.walkable[:] = False
+        self.down_stairs = numpy.zeros((width, height), dtype=bool, order='F')
+
+        self.dungeon_level: int = dungeon_level
 
     def to_json(self):
         json_data = {
             'width': self.width,
             'height': self.height,
+            'down_stairs': self.down_stairs.tolist(),
+            'dungeon_level': self.dungeon_level,
             'explored': self.explored.tolist(),
             'transparent': self.transparent.tolist(),
-            'walkable': self.walkable.tolist()
+            'walkable': self.walkable.tolist(),
         }
 
         return json_data
 
     @classmethod
     def from_json(cls, json_data):
-        game_map = cls(width=json_data['width'], height=json_data['height'])
+        game_map = cls(width=json_data['width'], height=json_data['height'], dungeon_level=json_data['dungeon_level'])
 
         for y in range(game_map.height):
             for x in range(game_map.width):
+                game_map.down_stairs[x, y] = json_data['down_stairs'][x][y]
                 game_map.explored[x, y] = json_data['explored'][x][y]
                 game_map.transparent[x, y] = json_data['transparent'][x][y]
                 game_map.walkable[x, y] = json_data['walkable'][x][y]
@@ -90,6 +96,9 @@ class GameMap(Map):
         rooms = []
         num_rooms = 0
 
+        center_of_last_room_x: int = None
+        center_of_last_room_y: int = None
+
         for r in range(constants['max_rooms']):
             # random width and height
             w = randint(constants['room_min_size'], constants['room_max_size'])
@@ -113,6 +122,9 @@ class GameMap(Map):
 
                 # center coordinates of new room, will be useful later
                 (new_x, new_y) = new_room.center()
+
+                center_of_last_room_x = new_x
+                center_of_last_room_y  = new_y
 
                 if num_rooms == 0:
                     # this is the first room, where the player starts at
@@ -140,6 +152,25 @@ class GameMap(Map):
                 # finally, append the new room to the list
                 rooms.append(new_room)
                 num_rooms += 1
+
+        self.down_stairs[center_of_last_room_x, center_of_last_room_y] = True
+
+    def next_floor(self, player, message_log, constants):
+        self.dungeon_level += 1
+        entities = [player]
+
+        self.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+        self.transparent[:] = False
+        self.walkable[:] = False
+        self.down_stairs = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+
+        self.make_map(player, entities, constants)
+
+        player.fighter.heal(player.fighter.max_hp // 2)
+
+        message_log.add_message('[color=green]You take a moment to rest, and recover your strength.[/color]')
+
+        return entities
 
     @staticmethod
     def place_entities(room, entities, constants):
@@ -224,17 +255,22 @@ class GameMap(Map):
     def render(self, colors):
         for y in range(self.height):
             for x in range(self.width):
+                down_stairs = self.down_stairs[x, y]
                 wall = self.is_blocked(x, y)
                 visible = self.fov[x, y]
 
                 if visible:
-                    if wall:
+                    if down_stairs:
+                        terminal.printf(x=x, y=y, s=f'[color={colors.get("light_ground")}]>[/color]')
+                    elif wall:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("light_wall")}]#[/color]')
                     else:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("light_ground")}].[/color]')
 
                 elif self.explored[x, y]:
-                    if wall:
+                    if down_stairs:
+                        terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_ground")}]>[/color]')
+                    elif wall:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_wall")}]#[/color]')
                     else:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_ground")}].[/color]')
