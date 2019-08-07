@@ -228,16 +228,17 @@ class Entity:
         tcod.path_delete(my_path)
 
     def move_towards(self, target_x, target_y, game_map, entities):
-        astar = tcod.path.AStar(game_map.walkable, diagonal=1.41)
+        astar = tcod.path.AStar(game_map.current_floor.walkable, diagonal=1.41)
         path = astar.get_path(self.x, self.y, target_x, target_y)
 
         if path:
             dx = path[0][0] - self.x
             dy = path[0][1] - self.y
 
-            if game_map.walkable[path[0][0], path[0][1]] and not get_blocking_entities_at_location(entities,
-                                                                                                   self.x + dx,
-                                                                                                   self.y + dy):
+            if game_map.current_floor.walkable[path[0][0], path[0][1]] and not get_blocking_entities_at_location(
+                    entities,
+                    self.x + dx,
+                    self.y + dy):
                 self.move(dx, dy)
 
 

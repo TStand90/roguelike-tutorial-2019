@@ -53,24 +53,24 @@ def render_bar(x: int, y: int, total_width: int, label: str, current_value: int,
 def render_all(entities: List[Entity], player: Entity, game_map: GameMap, game_state: GameStates,
                message_log: MessageLog, constants):
     # Draw the map
-    game_map.render(colors=constants['colors'])
+    game_map.current_floor.render(colors=constants['colors'])
 
     entities_in_render_order = sorted(entities, key=lambda x: x.render_order.value)
 
     # Draw all entities in the list
     for entity in entities_in_render_order:
-        if game_map.fov[entity.x, entity.y]:
+        if game_map.current_floor.fov[entity.x, entity.y]:
             entity.draw()
 
     render_bar(x=81, y=1, total_width=30, label='HP', current_value=player.fighter.hp,
                maximum_value=player.fighter.max_hp, text_color='white', bar_primary_color='green',
                bar_secondary_color='red')
 
-    terminal.printf(x=81, y=3, s=f'Dungeon Floor: {game_map.dungeon_level}')
+    terminal.printf(x=81, y=3, s=f'Dungeon Floor: {game_map.current_floor_number}')
 
     message_log.render()
 
-    names_under_mouse = get_names_under_mouse(entities, game_map.fov)
+    names_under_mouse = get_names_under_mouse(entities, game_map.current_floor.fov)
 
     if names_under_mouse:
         terminal.printf(81, 5, names_under_mouse)

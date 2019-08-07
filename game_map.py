@@ -38,7 +38,7 @@ class Rect:
                 self.y1 <= other.y2 and self.y2 >= other.y1)
 
 
-class GameMap(Map):
+class GameMapFloor(Map):
     def __init__(self, width: int, height: int, dungeon_level: int = 1):
         super().__init__(width=width, height=height, order='F')
 
@@ -46,6 +46,7 @@ class GameMap(Map):
         self.transparent[:] = False
         self.walkable[:] = False
         self.down_stairs = numpy.zeros((width, height), dtype=bool, order='F')
+        self.up_stairs = numpy.zeros((width, height), dtype=bool, order='F')
 
         self.dungeon_level: int = dungeon_level
 
@@ -75,6 +76,24 @@ class GameMap(Map):
 
         return game_map
 
+    @property
+    def down_stairs_location(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.down_stairs[x, y]:
+                    return x, y
+
+        return None
+
+    @property
+    def up_stairs_location(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.up_stairs[x, y]:
+                    return x, y
+
+        return None
+
     def create_h_tunnel(self, x1, x2, y):
         min_x: int = min(x1, x2)
         max_x: int = max(x1, x2) + 1
@@ -100,6 +119,8 @@ class GameMap(Map):
         rooms = []
         num_rooms = 0
 
+        center_of_first_room_x: int = None
+        center_of_first_room_y: int = None
         center_of_last_room_x: int = None
         center_of_last_room_y: int = None
 
@@ -134,6 +155,9 @@ class GameMap(Map):
                     # this is the first room, where the player starts at
                     player.x = new_x
                     player.y = new_y
+
+                    center_of_first_room_x = new_x
+                    center_of_first_room_y = new_y
                 else:
                     # all rooms after the first:
                     # connect it to the previous room with a tunnel
@@ -159,22 +183,41 @@ class GameMap(Map):
 
         self.down_stairs[center_of_last_room_x, center_of_last_room_y] = True
 
-    def next_floor(self, player, message_log, constants):
-        self.dungeon_level += 1
-        entities = [player]
+        if self.dungeon_level != 1 and center_of_first_room_x and center_of_first_room_y:
+            print(self.dungeon_level)
+            self.up_stairs[center_of_first_room_x, center_of_first_room_y] = True
 
-        self.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
-        self.transparent[:] = False
-        self.walkable[:] = False
-        self.down_stairs = numpy.zeros((self.width, self.height), dtype=bool, order='F')
-
-        self.make_map(player, entities, constants)
-
-        player.fighter.heal(player.fighter.max_hp // 2)
-
-        message_log.add_message('[color=green]You take a moment to rest, and recover your strength.[/color]')
-
-        return entities
+    # def next_floor(self, player, message_log, constants):
+    #     self.dungeon_level += 1
+    #     entities = [player]
+    #
+    #     self.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+    #     self.transparent[:] = False
+    #     self.walkable[:] = False
+    #     self.down_stairs = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+    #
+    #     self.make_map(player, entities, constants)
+    #
+    #     player.fighter.heal(player.fighter.max_hp // 2)
+    #
+    #     message_log.add_message('[color=green]You take a moment to rest, and recover your strength.[/color]')
+    #
+    #     return entities
+    #
+    # def previous_floor(self, player, message_log, constants):
+    #     self.dungeon_level -= 1
+    #     entities = [player]
+    #
+    #     self.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+    #     self.transparent[:] = False
+    #     self.walkable[:] = False
+    #     self.down_stairs = numpy.zeros((self.width, self.height))
+    #
+    #     self.make_map(player=player, entities=entities, constants=constants)
+    #
+    #     message_log.add_message('[color=green]You ascend.[/color]')
+    #
+    #     return entities
 
     def place_entities(self, room, entities):
         # Get a random number of monsters
@@ -285,12 +328,15 @@ class GameMap(Map):
         for y in range(self.height):
             for x in range(self.width):
                 down_stairs = self.down_stairs[x, y]
+                up_stairs = self.up_stairs[x, y]
                 wall = self.is_blocked(x, y)
                 visible = self.fov[x, y]
 
                 if visible:
                     if down_stairs:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("light_ground")}]>[/color]')
+                    elif up_stairs:
+                        terminal.printf(x=x, y=y, s=f'[color={colors.get("light_ground")}]<[/color]')
                     elif wall:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("light_wall")}]#[/color]')
                     else:
@@ -299,9 +345,99 @@ class GameMap(Map):
                 elif self.explored[x, y]:
                     if down_stairs:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_ground")}]>[/color]')
+                    elif up_stairs:
+                        terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_ground")}]<[/color]')
                     elif wall:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_wall")}]#[/color]')
                     else:
                         terminal.printf(x=x, y=y, s=f'[color={colors.get("dark_ground")}].[/color]')
 
         self.explored |= self.fov
+
+
+class GameMap():
+    def __init__(self, width: int, height: int, current_floor_number: int = 1, number_of_floors: int = 10,
+                 floors = None):
+        self.width: int = width
+        self.height: int = height
+        self.current_floor_number: int = current_floor_number
+
+        if floors:
+            self.floors = floors
+        else:
+            self.floors = []
+
+            for i in range(number_of_floors):
+                self.floors.append(GameMapFloor(width=width, height=height, dungeon_level=i+1))
+
+    def to_json(self):
+        json_data = {
+            'width': self.width,
+            'height': self.height,
+            'current_floor_number': self.current_floor_number,
+            'floors': [floor.to_json() for floor in self.floors],
+        }
+
+        return json_data
+
+    @classmethod
+    def from_json(cls, json_data):
+        json_floors = json_data.get('floors', [])
+        floors = []
+
+        for json_floor in json_floors:
+            floors.append(GameMapFloor.from_json(json_floor))
+
+        game_map = cls(
+            width=json_data['width'],
+            height=json_data['height'],
+            current_floor_number=json_data['current_floor_number'],
+            number_of_floors=len(floors),
+            floors=floors
+        )
+
+        return game_map
+
+    @property
+    def current_floor(self) -> GameMapFloor:
+        return self.floors[self.current_floor_number - 1]
+
+    def ascend(self):
+        self.current_floor_number -= 1
+
+    def descend(self):
+        self.current_floor_number += 1
+
+    def next_floor(self, player, message_log, constants):
+        self.current_floor_number += 1
+        entities = [player]
+
+        self.current_floor.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+        self.current_floor.transparent[:] = False
+        self.current_floor.walkable[:] = False
+        self.current_floor.down_stairs = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+
+        self.current_floor.make_map(player, entities, constants)
+
+        player.x, player.y = self.current_floor.up_stairs_location
+        player.fighter.heal(player.fighter.max_hp // 2)
+
+        message_log.add_message('[color=green]You take a moment to rest, and recover your strength.[/color]')
+
+        return entities
+
+    def previous_floor(self, player, message_log, constants):
+        self.current_floor_number -= 1
+        entities = [player]
+
+        self.current_floor.explored = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+        self.current_floor.transparent[:] = False
+        self.current_floor.walkable[:] = False
+        self.current_floor.down_stairs = numpy.zeros((self.width, self.height), dtype=bool, order='F')
+
+        self.current_floor.make_map(player, entities, constants)
+
+        player.x, player.y = self.current_floor.down_stairs_location
+        message_log.add_message('[color=green]You ascend.[/color]')
+
+        return entities

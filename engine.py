@@ -22,7 +22,7 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
 
     while game_running:
         if fov_recompute:
-            game_map.compute_fov(
+            game_map.current_floor.compute_fov(
                 x=player.x,
                 y=player.y,
                 radius=constants['fov_radius'],
@@ -72,7 +72,7 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
                 destination_x: int = player.x + dx
                 destination_y: int = player.y + dy
 
-                if not game_map.is_blocked(destination_x, destination_y):
+                if not game_map.current_floor.is_blocked(destination_x, destination_y):
                     target: Entity = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
                     if target:
@@ -116,8 +116,13 @@ def play_game(player: Entity, entities: List[Entity], game_map: GameMap, message
                 game_state = GameStates.DROP_INVENTORY
 
             if take_stairs:
-                if game_map.down_stairs[player.x, player.y]:
+                if game_map.current_floor.down_stairs[player.x, player.y]:
                     entities = game_map.next_floor(player=player, message_log=message_log, constants=constants)
+                    fov_recompute = True
+
+                    terminal.clear()
+                elif game_map.current_floor.up_stairs[player.x, player.y]:
+                    entities = game_map.previous_floor(player=player, message_log=message_log, constants=constants)
                     fov_recompute = True
 
                     terminal.clear()

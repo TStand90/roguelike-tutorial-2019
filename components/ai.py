@@ -1,6 +1,11 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from random import randint
+
+
+if TYPE_CHECKING:
+    from entity import Entity
+    from game_map import GameMap
 
 
 class BasicMonster:
@@ -24,9 +29,8 @@ class BasicMonster:
 
         monster = self.owner
 
-        if game_map.fov[monster.x, monster.y]:
+        if game_map.current_floor.fov[monster.x, monster.y]:
             if monster.distance_to(target) >= 2:
-                # monster.move_astar(target=target, entities=entities, game_map=game_map)
                 monster.move_towards(target_x=target.x, target_y=target.y, game_map=game_map, entities=entities)
             elif target.fighter.hp > 0:
                 attack_results = monster.fighter.attack(target=target)

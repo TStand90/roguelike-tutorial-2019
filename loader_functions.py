@@ -104,7 +104,7 @@ def get_game_variables(constants):
     player.equipment.toggle_equip(dagger)
 
     game_map: GameMap = GameMap(width=constants['map_width'], height=constants['map_height'])
-    game_map.make_map(
+    game_map.current_floor.make_map(
         player=player,
         entities=entities,
         constants=constants
